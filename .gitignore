@@ -1,0 +1,12 @@
+# Local credentials and environment overrides
+.env
+.env.*
+!.env.example
+
+# Installed dependencies and receipt records
+node_modules/
+data/
+
+# Logs and macOS metadata
+*.log
+.DS_Store

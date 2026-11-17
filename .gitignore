@@ -10,3 +10,7 @@ data/
 # Logs and macOS metadata
 *.log
 .DS_Store
+
+# Database backups
+backups/
+.omx/

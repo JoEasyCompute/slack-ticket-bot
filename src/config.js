@@ -14,3 +14,13 @@ export function readConfig(env = process.env) {
   return { botToken: env.SLACK_BOT_TOKEN, appToken: env.SLACK_APP_TOKEN,
     channelId: channelIds[0], channelIds, reaction, dataDir: env.DATA_DIR || './data' };
 }
+
+export function readManagementConfig(env = process.env) {
+  const config = readConfig(env);
+  for (const key of ['COORDINATOR_USERGROUP_ID', 'SUPPORT_USERGROUP_ID']) {
+    if (!/^S[A-Z0-9]+$/.test(env[key] || '')) throw new Error(`Set a valid ${key} before starting ticket management`);
+  }
+  if (!/^[CG][A-Z0-9]+$/.test(env.INTERNAL_SUPPORT_CHANNEL_ID || '')) throw new Error('Set INTERNAL_SUPPORT_CHANNEL_ID to the private staff channel ID');
+  if (config.channelIds.includes(env.INTERNAL_SUPPORT_CHANNEL_ID)) throw new Error('The internal support channel must not be a customer intake channel');
+  return { ...config, internalChannelId: env.INTERNAL_SUPPORT_CHANNEL_ID, coordinatorGroupId: env.COORDINATOR_USERGROUP_ID, supportGroupId: env.SUPPORT_USERGROUP_ID };
+}

@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.16.0" },
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "scripts": {
     "start": "node --env-file=.env src/app.js",
     "start:server": "node src/app.js",
     "test": "node --test",
-    "check": "node --check src/app.js && node --check src/bot.js && node --check src/store.js && node --check src/config.js"
+    "check": "node scripts/check.js",
+    "outbox": "node --env-file=.env scripts/outbox.js",
+    "groups": "node --env-file=.env scripts/groups.js"
   },
-  "dependencies": { "@slack/bolt": "^4.0.0" }
+  "dependencies": {
+    "@slack/bolt": "^4.0.0"
+  }
 }

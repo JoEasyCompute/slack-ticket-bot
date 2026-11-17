@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 COPY src ./src
+COPY scripts ./scripts
 RUN mkdir /app/data && chown node:node /app/data
 USER node
 CMD ["npm", "run", "start:server"]

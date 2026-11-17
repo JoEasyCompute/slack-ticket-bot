@@ -13,8 +13,10 @@ export function createReportHandler({ db, client, store, workspaceId, channelIds
     if (!message.user || message.bot_id || message.subtype === 'bot_message' || (message.thread_ts && message.thread_ts !== message.ts)) return;
     let permalink = null;
     if (client.chat?.getPermalink) {
-      const link = await client.chat.getPermalink({ channel: item.channel, message_ts: item.ts });
-      if (link.ok) permalink = link.permalink;
+      try {
+        const link = await client.chat.getPermalink({ channel: item.channel, message_ts: item.ts });
+        if (link.ok && typeof link.permalink === 'string' && link.permalink) permalink = link.permalink;
+      } catch { /* Optional links must not prevent durable ticket creation. */ }
     }
     let channelName = null;
     if (client.conversations?.info) {

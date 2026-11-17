@@ -25,3 +25,23 @@ test('management requires group settings and retains channel compatibility',()=>
  assert.throws(()=>readManagementConfig({...env,COORDINATOR_USERGROUP_ID:'S1'}),/SUPPORT_USERGROUP_ID/);
  assert.equal(readManagementConfig({...env,COORDINATOR_USERGROUP_ID:'S1',SUPPORT_USERGROUP_ID:'S2',INTERNAL_SUPPORT_CHANNEL_ID:'CSTAFF'}).supportGroupId,'S2');
 });
+
+test('optional permalink failures still create one ticket and both delivery records', async t => {
+ for (const outcome of ['timeout', 'rate_limit', 'unsuccessful']) await t.test(outcome, async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'report-link-'));
+  const db = new TicketDatabase(join(dir, 'tickets.sqlite'));
+  t.after(async () => { db.close(); await rm(dir, { recursive: true, force: true }); });
+  const client = {
+   reactions: { get: async () => ({ ok: true, message: { user: 'U1', ts: event.item.ts, text: 'Issue' } }) },
+   chat: { getPermalink: async () => {
+    if (outcome === 'unsuccessful') return { ok: false };
+    throw Object.assign(new Error(outcome), { code: outcome === 'rate_limit' ? 'slack_webapi_rate_limited_error' : 'ETIMEDOUT' });
+   } }
+  };
+  const handle = createReportHandler({ db, client, store: new FileStore(dir), workspaceId: 'T1', channelIds: ['C1'], internalChannelId: 'CSTAFF' });
+  await Promise.all([handle(event), handle(event)]);
+  assert.equal(db.list('T1').length, 1);
+  assert.equal(db.list('T1')[0].permalink, null);
+  assert.deepEqual(db.pendingOutbox().map(row => row.kind), ['card', 'internal_card']);
+ });
+});

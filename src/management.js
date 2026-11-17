@@ -40,10 +40,9 @@ export class TicketManager {
   async home(userId, { filter = 'mine', status = 'active', page = 0 } = {}) {
     if (!['mine', 'all', 'unassigned'].includes(filter) || !['active', 'any', ...STATUSES].includes(status)) throw new Error('Invalid ticket filter.');
     const visible = [];
-    const membership = new Map();
+    const access = await this.permissions.homeAccess(userId);
     for (const ticket of this.db.list(this.workspaceId)) {
-      if (!membership.has(ticket.channelId)) membership.set(ticket.channelId, await this.permissions.canView(userId, ticket.channelId));
-      if (!membership.get(ticket.channelId)) continue;
+      if (!access.channelIds.has(ticket.channelId)) continue;
       if (filter === 'mine' && ticket.assigneeId !== userId) continue;
       if (filter === 'unassigned' && ticket.assigneeId) continue;
       if (status === 'active' && ticket.status === 'Resolved') continue;
@@ -52,7 +51,7 @@ export class TicketManager {
     }
     const currentPage = Math.min(Math.max(0, Math.trunc(Number(page)) || 0), Math.max(0, Math.ceil(visible.length / 10) - 1));
     for (let i = currentPage * 10; i < Math.min(visible.length, currentPage * 10 + 10); i++) visible[i] = await withUserNames(visible[i], this.client);
-    const showAssignment = await this.permissions.isCoordinator(userId);
+    const showAssignment = access.isCoordinator;
     return homeView(visible, { filter, status, page, showAssignment });
   }
 }

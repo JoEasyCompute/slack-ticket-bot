@@ -24,6 +24,7 @@ function fixture() {
  const updates=[];
  const db={ get:(id,w)=> id===1 && w==='T1'?ticket:null, list:()=>[ticket,{...ticket,id:2,channelId:'CPRIVATE',title:'SECRET'}], update: args=>{updates.push(args);return {...ticket,...args};}, history:()=>[] };
  const permissions={canView:async(u,c)=>c==='C1', assertAssign:async()=>{}, assertStatus:async()=>{}, eligibleAssignees:async()=>[], isCoordinator:async()=>false};
+ permissions.homeAccess=async()=>({channelIds:new Set(['C1']),isCoordinator:await permissions.isCoordinator()});
  return {db, permissions, updates, manager:new TicketManager({db,permissions,workspaceId:'T1'})};
 }
 test('Home filters inaccessible channels before rendering', async()=>{

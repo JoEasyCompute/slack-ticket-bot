@@ -76,6 +76,21 @@ export class Permissions {
     } catch { return false; }
   }
 
+  // One live snapshot per Home render; never reused by reads or management actions.
+  async homeAccess(userId) {
+    const denied = { channelIds: new Set(), isCoordinator: false };
+    if (!this.workspaceId || !this.internalChannelId || !userId) return denied;
+    try {
+      if (!this.ownWorkspaceHuman(await this.user(userId))) return denied;
+      const [support, coordinators, members] = await Promise.all([
+        this.group(this.supportGroupId), this.group(this.coordinatorGroupId), this.members(this.internalChannelId)
+      ]);
+      const coordinator = coordinators.includes(userId);
+      if (!members.includes(userId) || (!support.includes(userId) && !coordinator)) return denied;
+      return { channelIds: new Set(this.channelIds), isCoordinator: coordinator };
+    } catch { return denied; }
+  }
+
   async validateInternalChannel() {
     try {
       if (!this.workspaceId || !this.internalChannelId) throw new Error();
